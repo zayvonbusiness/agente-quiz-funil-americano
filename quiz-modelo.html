@@ -28,7 +28,9 @@ small{color:var(--c2)}
 <body>
 <main><div class="card" id="app"></div></main>
 <script>
-/* ===== CONFIGURAÇÃO (o Pedro edita só aqui) ===== */
+/* ===== CONFIGURAÇÃO (edite só aqui) ===== */
+const EMPRESA  = "[NOME DA EMPRESA]"; // TODO: nome que aparece no consentimento
+const POLITICA = "#";               // TODO: link da sua política de privacidade
 const WHATSAPP = "5500000000000";   // TODO: número do comercial, com 55 + DDD
 const WEBHOOK  = "";                // TODO: URL do Make/Zapier/planilha que recebe o lead qualificado (vazio = não envia)
 const MIN_SCORE = 8;                // nota mínima para ser considerado qualificado
@@ -95,7 +97,7 @@ function formulario(score){
    <label>Nome<input type="text" name="nome" required autocomplete="name"></label>
    <label>WhatsApp (com DDD)<input type="tel" name="zap" required pattern="[0-9 ()+\\-]{10,}" autocomplete="tel"></label>
    <label>E-mail (opcional)<input type="email" name="email" autocomplete="email"></label>
-   <div class="ck"><input type="checkbox" id="ok" required><label for="ok">Autorizo o Pedro Justino a entrar em contato comigo. <a href="politica-privacidade-pedro.pdf" target="_blank">Política de privacidade</a></label></div>
+   <div class="ck"><input type="checkbox" id="ok" required><label for="ok">Autorizo ${EMPRESA} a entrar em contato comigo. <a href="${POLITICA}" target="_blank" rel="noopener">Política de privacidade</a></label></div>
    <button class="go" type="submit">Falar no WhatsApp</button>
   </form>`;
   document.getElementById("f").onsubmit=e=>{
