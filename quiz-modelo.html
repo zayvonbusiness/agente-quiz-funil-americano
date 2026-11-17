@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Diagnóstico: onde o seu comercial perde venda</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Plus+Jakarta+Sans:wght@800&display=swap" rel="stylesheet">
+<style>
+:root{--azul:#0B3C8C;--laranja:#F26A1B;--c1:#4A5568;--c2:#718096;--bg:#F3F6FB;--branco:#fff}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--c1);font:16px/1.5 Inter,Arial,sans-serif}
+main{max-width:560px;margin:0 auto;padding:24px 16px}
+.card{background:var(--branco);border-radius:16px;padding:24px;box-shadow:0 2px 12px #0b3c8c14}
+h1,h2{font-family:'Plus Jakarta Sans',Arial,sans-serif;color:var(--azul);line-height:1.2;margin:0 0 12px}
+h1{font-size:26px}h2{font-size:21px}
+.bar{height:6px;background:#dfe6f2;border-radius:3px;margin-bottom:20px}
+.bar i{display:block;height:100%;background:var(--laranja);border-radius:3px;transition:width .3s}
+button,.btn{display:block;width:100%;text-align:left;font:inherit;padding:14px 16px;margin-top:10px;border:2px solid #dfe6f2;border-radius:12px;background:var(--branco);color:var(--c1);cursor:pointer}
+button:hover,button:focus-visible{border-color:var(--azul);outline:none}
+.go{background:var(--azul);border-color:var(--azul);color:#fff;text-align:center;font-weight:600;text-decoration:none}
+.go:hover{background:#082d6b}
+input[type=text],input[type=tel],input[type=email]{width:100%;padding:12px;margin:6px 0 14px;border:2px solid #dfe6f2;border-radius:10px;font:inherit}
+label{font-size:14px;color:var(--c2)}
+.ck{display:flex;gap:8px;align-items:flex-start;margin-bottom:16px}.ck input{margin-top:4px}
+small{color:var(--c2)}
+</style>
+</head>
+<body>
+<main><div class="card" id="app"></div></main>
+<script>
+/* ===== CONFIGURAÇÃO (o Pedro edita só aqui) ===== */
+const WHATSAPP = "5500000000000";   // TODO: número do comercial, com 55 + DDD
+const WEBHOOK  = "";                // TODO: URL do Make/Zapier/planilha que recebe o lead qualificado (vazio = não envia)
+const MIN_SCORE = 8;                // nota mínima para ser considerado qualificado
+// Cada opção: [texto, pontos, elimina?]. elimina=true => não é o perfil, barra o lead.
+const PERGUNTAS = [
+ {q:"O que a sua empresa vende?", o:[
+  ["Software ou serviço para outras empresas",2,false],
+  ["Produto ou serviço para pessoa física",0,true],
+  ["Ainda não vendo",0,true]]},
+ {q:"Quantos contatos interessados (leads) chegam por mês?", o:[
+  ["Menos de 20",0,true],
+  ["De 20 a 100",1,false],
+  ["De 100 a 300",2,false],
+  ["Mais de 300",2,false]]},
+ {q:"Você investe em anúncios para gerar esses contatos?", o:[
+  ["Não invisto",0,true],
+  ["Invisto pouco, sem acompanhar",1,false],
+  ["Invisto todo mês",2,false]]},
+ {q:"Quem atende esses contatos?", o:[
+  ["Só eu, quando dá tempo",1,false],
+  ["Uma ou duas pessoas",2,false],
+  ["Um time comercial",2,false]]},
+ {q:"Onde ficam registrados os contatos e as conversas?", o:[
+  ["No WhatsApp e em planilha solta",3,false],
+  ["Em um CRM, mas pouca gente usa",3,false],
+  ["Em um CRM bem usado",0,false]]},
+ {q:"Você sabe quanto custa, de verdade, cada venda que fecha?", o:[
+  ["Não sei",3,false],
+  ["Tenho uma ideia, sem conta certa",2,false],
+  ["Sei, está em um painel",0,false]]},
+ {q:"Quando você quer resolver isso?", o:[
+  ["Agora, está me custando venda",3,false],
+  ["Neste trimestre",1,false],
+  ["Só estou curioso",0,true]]}
+];
+/* ================================================= */
+
+const app=document.getElementById("app"), resp=[];
+let i=0;
+
+function pergunta(){
+  const p=PERGUNTAS[i];
+  app.innerHTML=`<div class="bar"><i style="width:${i/PERGUNTAS.length*100}%"></i></div>
+  <h2>${p.q}</h2>`+p.o.map((o,k)=>`<button data-k="${k}">${o[0]}</button>`).join("");
+  app.querySelectorAll("button").forEach(b=>b.onclick=()=>{resp.push({q:p.q,a:p.o[b.dataset.k]});++i<PERGUNTAS.length?pergunta():resultado()});
+}
+
+function resultado(){
+  const score=resp.reduce((s,r)=>s+r.a[1],0), barrado=resp.some(r=>r.a[2]);
+  (!barrado&&score>=MIN_SCORE)?formulario(score):desqualificado();
+}
+
+function desqualificado(){
+  // Não coleta contato e não envia nada: só lead qualificado é contabilizado.
+  app.innerHTML=`<h2>Obrigado por responder</h2>
+  <p>Pelo que você respondeu, o nosso trabalho ainda não é o melhor próximo passo para o seu momento. Guarde esta ideia: antes de investir em mais contatos, descubra quanto custa cada venda que você já fecha hoje.</p>`;
+}
+
+function formulario(score){
+  app.innerHTML=`<div class="bar"><i style="width:100%"></i></div>
+  <h2>Seu comercial tem furos que dá para consertar</h2>
+  <p>Deixe seus dados e o time conversa com você pelo WhatsApp.</p>
+  <form id="f">
+   <label>Nome<input type="text" name="nome" required autocomplete="name"></label>
+   <label>WhatsApp (com DDD)<input type="tel" name="zap" required pattern="[0-9 ()+\\-]{10,}" autocomplete="tel"></label>
+   <label>E-mail (opcional)<input type="email" name="email" autocomplete="email"></label>
+   <div class="ck"><input type="checkbox" id="ok" required><label for="ok">Autorizo o Pedro Justino a entrar em contato comigo. <a href="politica-privacidade-pedro.pdf" target="_blank">Política de privacidade</a></label></div>
+   <button class="go" type="submit">Falar no WhatsApp</button>
+  </form>`;
+  document.getElementById("f").onsubmit=e=>{
+    e.preventDefault();
+    const d=Object.fromEntries(new FormData(e.target));
+    const lead={...d,score,respostas:resp.map(r=>({pergunta:r.q,resposta:r.a[0]})),quando:new Date().toISOString()};
+    if(WEBHOOK)fetch(WEBHOOK,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(lead),keepalive:true}).catch(()=>{});
+    const msg=`Olá, sou ${d.nome}. Fiz o diagnóstico e quero conversar.`;
+    location.href=`https://wa.me/${WHATSAPP}?text=${encodeURIComponent(msg)}`;
+  };
+}
+
+app.innerHTML=`<h1>Onde o seu comercial perde venda?</h1>
+<p>7 perguntas, 2 minutos. No fim, você vê se vale uma conversa.</p>
+<button class="go" id="start">Começar</button>`;
+document.getElementById("start").onclick=pergunta;
+</script>
+</body>
+</html>
